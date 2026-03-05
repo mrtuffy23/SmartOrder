@@ -40,10 +40,19 @@ class UserSeeder extends Seeder
                 'role' => 'produksi',
                 'password' => Hash::make('password'),
             ],
+            [
+                'name' => 'Staff Laborat',
+                'email' => 'laborat@indotex.com',
+                'role' => 'laborat',
+                'password' => Hash::make('password'),
+            ]
         ];
 
-        foreach ($userData as $key => $val) {
-            User::create($val);
+        foreach ($userData as $val) {
+            User::updateOrCreate(
+                ['email' => $val['email']],
+                $val
+            );
         }
     }
 }

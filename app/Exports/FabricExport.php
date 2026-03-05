@@ -2,19 +2,55 @@
 
 namespace App\Exports;
 
-use App\Models\Fabric;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings; // Tambah ini
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class FabricExport implements FromCollection, WithHeadings
+class FabricExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize
 {
+    protected $data_kain;
+    private $rowNumber = 0;
+
+    // 1. Tangkap data dari Controller
+    public function __construct($data_kain)
+    {
+        $this->data_kain = $data_kain;
+    }
+
     public function collection()
     {
-        return Fabric::select('id','corak','code_kain','quality','buyer_code','brand', 'construction', 'density')->get();
+        // Kembalikan data yang sudah difilter Aktif tadi
+        return $this->data_kain;
+    }
+
+    public function map($kain): array
+    {
+        $this->rowNumber++;
+
+        return [
+            $this->rowNumber,
+            $kain->corak ?? '-',
+            $kain->code_kain ?? '-',
+            $kain->quality ?? '-',
+            $kain->buyer_code ?? '-',
+            $kain->brand ?? '-',
+            $kain->construction ?? '-',
+            $kain->density ?? '-',
+        ];
     }
 
     public function headings(): array
     {
-        return ["No", "Corak", "Kode Kain", "Kualitas", "Kode Buyer", "Brand", "Konstruksi", "Density"];
+        return [
+            "No", 
+            "Corak", 
+            "Kode Kain", 
+            "Quality", 
+            "Kode Buyer", 
+            "Brand", 
+            "Konstruksi", 
+            "Density"
+        ];
     }
 }

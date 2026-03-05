@@ -38,6 +38,7 @@
                                     <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin Transaksi</option>
                                     <option value="gudang" {{ $user->role == 'gudang' ? 'selected' : '' }}>Bagian Gudang</option>
                                     <option value="produksi" {{ $user->role == 'produksi' ? 'selected' : '' }}>Bagian Produksi</option>
+                                    <option value="laborat" {{ $user->role == 'laborat' ? 'selected' : '' }}>Bagian Laborat</option>
                                 </select>
                             </div>
                         </div>

@@ -8,7 +8,8 @@ use App\Models\Buyer;
 use App\Models\Fabric;
 use App\Models\Color;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // Wajib import ini untuk Transaksi
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -47,8 +48,9 @@ class OrderController extends Controller
 
         $tahun = date('y');
         $full_mf_number = "OK/" . $tahun . "/" . $request->mf_suffix;
+        
         // Gunakan DB Transaction biar kalau error, data tidak masuk setengah-setengah
-        DB::transaction(function () use ($request,$full_mf_number) {
+        DB::transaction(function () use ($request, $full_mf_number) {
             
             // A. Simpan Header (Order)
             $order = Order::create([
@@ -57,24 +59,31 @@ class OrderController extends Controller
                 'order_date' => $request->order_date,
                 'buyer_id' => $request->buyer_id,
                 'fabric_id' => $request->fabric_id,
+                'customer_level'  => $request->customer_level,
+                'target_produksi' => $request->target_produksi, // Tambahan
+                'target_packing'  => $request->target_packing,
             ]);
 
             // B. Simpan Detail (Looping Array)
-            // Kita ambil data dari array input
             $colors = $request->color_id;
             
             foreach ($colors as $key => $colorId) {
+                // 👇 KALKULASI BACKEND (Mencegah manipulasi dari frontend) 👇
+                $batch_size_aktual = $request->batch_size[$key] ?? 0;
+                $jml_batch_aktual  = $request->jml_batch[$key] ?? 0;
+                $hitung_jml_grey   = $batch_size_aktual * $jml_batch_aktual;
+                // 👆 --------------------------------------------------- 👆
+
                 OrderDetail::create([
-                    'order_id' => $order->id, // Ambil ID dari order yang baru dibuat
-                    'color_id' => $colorId,
-                    'qty_om' => $request->qty_om[$key] ?? 0,
-                    'batch_size' => $request->batch_size[$key] ?? 0,
-                    'jml_batch' => $request->jml_batch[$key] ?? 0,
-                    'jml_grey' => $request->jml_grey[$key] ?? 0,
-                    'notes' => $request->notes[$key] ?? null,
+                    'order_id'   => $order->id, // Ambil ID dari order yang baru dibuat
+                    'color_id'   => $colorId,
+                    'qty_om'     => $request->qty_om[$key] ?? 0,
+                    'batch_size' => $batch_size_aktual,
+                    'jml_batch'  => $jml_batch_aktual,
+                    'jml_grey'   => $hitung_jml_grey, // Menggunakan hasil hitungan server
+                    'notes'      => $request->notes[$key] ?? null,
                 ]);
             }
-
         });
 
         return redirect()->route('orders.index')->with('success', 'Order berhasil dibuat!');
@@ -95,6 +104,7 @@ class OrderController extends Controller
         $order->delete(); // Baru hapus induknya
         return redirect()->route('orders.index')->with('success', 'Order dihapus!');
     }
+
     // 6. TAMPILKAN FORM EDIT
     public function edit($id)
     {
@@ -116,30 +126,35 @@ class OrderController extends Controller
             'po_number' => 'required', // Boleh sama kalau punya sendiri, jadi hapus unique
             'order_date' => 'required|date',
             'buyer_id' => 'required',
+            'customer_level' => 'required',
             'fabric_id' => 'required',
             'color_id' => 'required|array',
             'color_id.*' => 'required',
         ]);
+        
         $tahun = date('y');
     
-    // Cek: User isi buntutnya atau tidak?
-    if ($request->mf_suffix) {
-        $full_mf_number = "OK/" . $tahun . "/" . strtoupper($request->mf_suffix);
-    } else {
-        // Kalau kosong, biarkan null atau ambil data lama (sesuai kebutuhan)
-        $full_mf_number = null; 
-    }
+        // Cek: User isi buntutnya atau tidak?
+        if ($request->mf_suffix) {
+            $full_mf_number = "OK/" . $tahun . "/" . strtoupper($request->mf_suffix);
+        } else {
+            // Kalau kosong, biarkan null atau ambil data lama (sesuai kebutuhan)
+            $full_mf_number = null; 
+        }
 
         DB::transaction(function () use ($request, $id, $full_mf_number) {
             $order = Order::findOrFail($id);
 
             // 2. Update Header (Data Umum)
             $order->update([
-                'po_number' => $request->po_number,
-                'mf_number' => $full_mf_number,
+                'po_number'  => $request->po_number,
+                'mf_number'  => $full_mf_number,
                 'order_date' => $request->order_date,
-                'buyer_id' => $request->buyer_id,
-                'fabric_id' => $request->fabric_id,
+                'buyer_id'   => $request->buyer_id,
+                'fabric_id'  => $request->fabric_id,
+                'target_produksi' => $request->target_produksi, // Tambahan
+                'target_packing'  => $request->target_packing,
+                'customer_level'  => $request->customer_level,
             ]);
 
             // 3. Update Detail (Cara: Hapus Lama -> Masukkan Baru)
@@ -152,21 +167,28 @@ class OrderController extends Controller
                 // Lewati jika baris kosong (jaga-jaga)
                 if(!$colorId) continue;
 
+                // 👇 KALKULASI BACKEND (Mencegah manipulasi dari frontend) 👇
+                $batch_size_aktual = $request->batch_size[$key] ?? 0;
+                $jml_batch_aktual  = $request->jml_batch[$key] ?? 0;
+                $hitung_jml_grey   = $batch_size_aktual * $jml_batch_aktual;
+                // 👆 --------------------------------------------------- 👆
+
                 OrderDetail::create([
-                    'order_id' => $order->id,
-                    'color_id' => $colorId,
-                    'qty_om' => $request->qty_om[$key] ?? 0,
-                    'batch_size' => $request->batch_size[$key] ?? 0,
-                    'jml_batch' => $request->jml_batch[$key] ?? 0,
-                    'jml_grey' => $request->jml_grey[$key] ?? 0,
-                    'notes' => $request->notes[$key] ?? null,
+                    'order_id'   => $order->id,
+                    'color_id'   => $colorId,
+                    'qty_om'     => $request->qty_om[$key] ?? 0,
+                    'batch_size' => $batch_size_aktual,
+                    'jml_batch'  => $jml_batch_aktual,
+                    'jml_grey'   => $hitung_jml_grey, // Menggunakan hasil hitungan server
+                    'notes'      => $request->notes[$key] ?? null,
                 ]);
             }
         });
 
         return redirect()->route('orders.index')->with('success', 'Order berhasil diperbarui!');
     }
-    // Fungsi Khusus Cetak Surat Jalan
+
+    // 8. Fungsi Khusus Cetak Surat Jalan
     public function print($id)
     {
         // Ambil data order lengkap dengan relasinya

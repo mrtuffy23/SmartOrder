@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome-free/css/all.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/dist/css/adminlte.min.css') }}">
 </head>
-<body class="hold-transition sidebar-mini">
+<body class="hold-transition sidebar-mini layout-fixed {{ request()->routeIs(['dashboard','fabrics.index', 'receipts.*', 'pemartaians.*', 'wip.index','reports.index', 'wip.laporan', 'laporan.*','deliveries.*']) ? 'sidebar-collapse' : '' }}">
 <div class="wrapper">
 
   @include('layouts.navbar')

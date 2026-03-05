@@ -7,7 +7,13 @@ class ReceiptDetail extends Model
 {
     use HasFactory;
     protected $guarded = [];
-
+    protected $fillable = [
+        'receipt_id', 
+        'fabric_id', 
+        'total_meter', 
+        'no_order', 
+        'keterangan'
+    ];
     // Relasi balik ke Induk Penerimaan
     public function receipt()
     {

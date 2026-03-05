@@ -8,5 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Buyer extends Model
 {
     use HasFactory;
-    protected $guarded = []; // Biar bisa simpan semua kolom
+    protected $guarded = []; 
+    protected $fillable = ['name', 'kode_buyer'];
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
 }

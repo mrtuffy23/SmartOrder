@@ -75,6 +75,8 @@
                                     <span class="badge badge-primary">Admin Transaksi</span>
                                 @elseif($user->role == 'gudang')
                                     <span class="badge badge-success">Bagian Gudang</span>
+                                @elseif($user->role == 'laborat')
+                                    <span class="badge badge-info">Bagian Laborat</span>
                                 @else
                                     <span class="badge badge-warning">Bagian Produksi</span>
                                 @endif

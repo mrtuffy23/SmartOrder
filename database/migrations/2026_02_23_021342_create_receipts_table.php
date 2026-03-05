@@ -10,16 +10,15 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-    {
+{
     Schema::create('receipts', function (Blueprint $table) {
         $table->id();
-        $table->string('no_bukti')->unique(); // Contoh: 026544
-        $table->date('tgl_terima');           // Contoh: 02 Mar 2022
-        $table->string('terima_dari')->nullable(); // Contoh: Gudang Grey
-        $table->string('keterangan')->nullable();
+        $table->string('no_bukti')->unique(); // Auto-number
+        $table->date('tanggal');
+        $table->string('terima'); // Sesuai Excel: misal diisi "GUDANG GREIGE" atau nama Supplier
         $table->timestamps();
     });
-    }
+}
 
     /**
      * Reverse the migrations.

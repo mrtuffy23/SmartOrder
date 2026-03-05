@@ -7,6 +7,7 @@ class Delivery extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    protected $fillable = ['tanggal', 'buyer_id'];
 
     public function details()
     {
@@ -15,6 +16,6 @@ class Delivery extends Model
 
     public function buyer()
     {
-        return $this->belongsTo(Buyer::class);
+        return $this->belongsTo(Buyer::class, 'buyer_id');
     }
 }

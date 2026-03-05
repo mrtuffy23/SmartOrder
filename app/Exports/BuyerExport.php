@@ -4,7 +4,7 @@ namespace App\Exports;
 
 use App\Models\Buyer;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings; // Tambah ini
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class BuyerExport implements FromCollection, WithHeadings
 {

@@ -7,7 +7,11 @@ class Receipt extends Model
 {
     use HasFactory;
     protected $guarded = [];
-
+    protected $fillable = [
+        'no_bukti', 
+        'tanggal', 
+        'terima', 
+    ];
     // Relasi: 1 Penerimaan punya banyak Detail
     public function details()
     {

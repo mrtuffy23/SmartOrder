@@ -3,7 +3,7 @@
 @section('content')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Buat Surat Jalan (Pengiriman)</h1>
+        <h1 class="m-0">Tambah Data Pengiriman (Delivery)</h1>
     </div>
 </div>
 
@@ -11,50 +11,13 @@
     <form action="{{ route('deliveries.store') }}" method="POST">
         @csrf
         <div class="container-fluid">
+            
             <div class="card card-primary">
-                <div class="card-header"><h3 class="card-title">Data Pengiriman</h3></div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>No. Surat Jalan</label>
-                                <input type="text" name="no_surat_jalan" class="form-control" value="{{ $auto_no_sj }}" required readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Tanggal Kirim</label>
-                                <input type="date" name="tanggal_kirim" class="form-control" value="{{ date('Y-m-d') }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Tujuan Kirim (Customer/Buyer)</label>
-                                <select name="buyer_id" class="form-control" required>
-                                    <option value="">-- Pilih Customer --</option>
-                                    @foreach($buyers as $buyer)
-                                        <option value="{{ $buyer->id }}">{{ $buyer->name }} ({{ $buyer->kode_buyer }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Plat Kendaraan (Truk/Mobil)</label>
-                                <input type="text" name="no_kendaraan" class="form-control" placeholder="Contoh: B 1234 CD">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Nama Supir</label>
-                                <input type="text" name="nama_supir" class="form-control" placeholder="Nama Supir...">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Keterangan Tambahan</label>
-                                <input type="text" name="keterangan" class="form-control" placeholder="Opsional...">
-                            </div>
+                        <div class="col-md-3 form-group mb-0">
+                            <label>Tanggal Pengiriman</label>
+                            <input type="date" name="tanggal" class="form-control" required value="{{ date('Y-m-d') }}">
                         </div>
                     </div>
                 </div>
@@ -62,39 +25,80 @@
 
             <div class="card card-success">
                 <div class="card-header">
-                    <h3 class="card-title">Muatan Kain (Barang Jadi)</h3>
+                    <h3 class="card-title">Rincian Kain & Buyer</h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-sm btn-light" id="add-row">
+                        <button type="button" class="btn btn-sm btn-light font-weight-bold" id="add-row">
                             <i class="fas fa-plus"></i> Tambah Baris
                         </button>
                     </div>
                 </div>
                 <div class="card-body p-0 table-responsive">
-                    <table class="table table-bordered table-sm text-center" id="table-detail">
+                    <table class="table table-bordered table-sm text-center align-middle" id="table-detail" style="min-width: 1200px;">
                         <thead class="bg-light">
                             <tr>
-                                <th width="45%">Pilih Kain (Dari Gudang Barang Jadi)</th>
-                                <th width="15%">Jml Roll</th>
-                                <th width="15%">Total Meter</th>
-                                <th width="15%">Berat (Kg)</th>
-                                <th width="10%">#</th>
+                                <th width="12%">Pilih Batch</th>
+                                <th width="15%" class="text-primary">Buyer</th>
+                                <th width="12%" class="text-primary">No. Order</th>
+                                <th width="10%">Corak</th>
+                                <th width="12%" class="text-primary">Warna</th>
+                                <th width="6%">Gulung</th>
+                                <th width="8%">Meter</th>
+                                <th width="8%" class="text-primary">No. Roda</th>
+                                <th width="12%" class="text-primary">Ket</th>
+                                <th width="5%">#</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>
-                                    <select name="quality_finish_id[]" class="form-control form-control-sm" required>
-                                        <option value="">-- Pilih Kain Siap Kirim --</option>
-                                        @foreach($finished_goods as $fg)
-                                            <option value="{{ $fg->id }}">
-                                                Order: {{ $fg->pemartaianDetail->no_order ?? '-' }} | Corak: {{ $fg->pemartaianDetail->fabric->corak ?? '-' }} (Tersedia: {{ number_format($fg->hasil_meter, 2) }} Mtr)
+                                    <select name="pemartaian_detail_id[]" class="form-control form-control-sm select-batch" required>
+                                        <option value="">-- Pilih --</option>
+                                        @foreach($available_batches as $batch)
+                                            <option value="{{ $batch->id }}" 
+                                                data-corak="{{ $batch->fabric->corak ?? '' }}"
+                                                data-gulung="{{ $batch->jml_gulung }}"
+                                                data-meter="{{ $batch->total_meter }}">
+                                                {{ $batch->no_batch }}
                                             </option>
                                         @endforeach
                                     </select>
                                 </td>
-                                <td><input type="number" name="jml_roll[]" class="form-control form-control-sm" step="1" value="0"></td>
-                                <td><input type="number" name="total_meter[]" class="form-control form-control-sm" step="0.01" value="0" required></td>
-                                <td><input type="number" name="total_berat[]" class="form-control form-control-sm" step="0.01" value="0"></td>
+                                
+                                <td>
+                                    <select name="buyer_id[]" class="form-control form-control-sm" required>
+                                        <option value="">-- Pilih Buyer --</option>
+                                        @foreach($buyers as $buyer)
+                                            <option value="{{ $buyer->id }}">{{ $buyer->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+    
+                                <td>
+                                    <select name="mf_number[]" class="form-control form-control-sm" required>
+                                        <option value="">-- Pilih no order --</option>
+                                        @foreach($orders as $order)
+                                            <option value="{{ $order->mf_number }}">{{ $order->mf_number }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                
+                                <td><input type="text" class="form-control form-control-sm bg-light get-corak" readonly tabindex="-1"></td>
+                                
+                                <td>
+                                    <select name="color_id[]" class="form-control form-control-sm" required>
+                                        <option value="">-- Pilih Warna --</option>
+                                        @foreach($colors as $color)
+                                            <option value="{{ $color->id }}">{{ $color->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                
+                                <td><input type="text" class="form-control form-control-sm bg-light get-gulung text-center" readonly tabindex="-1"></td>
+                                <td><input type="text" class="form-control form-control-sm bg-light get-meter text-center" readonly tabindex="-1"></td>
+                                
+                                <td><input type="text" name="no_roda[]" class="form-control form-control-sm" required></td>
+                                <td><input type="text" name="keterangan[]" class="form-control form-control-sm"></td>
+                                
                                 <td>
                                     <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button>
                                 </td>
@@ -103,8 +107,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-right">
-                    <a href="{{ route('deliveries.index') }}" class="btn btn-secondary mr-2">Batal</a>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-truck"></i> Proses Pengiriman</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold"><i class="fas fa-save"></i> Simpan Pengiriman</button>
                 </div>
             </div>
         </div>
@@ -114,24 +117,41 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const tableBody = document.querySelector('#table-detail tbody');
+        
+        // Fitur Tambah Baris
         document.getElementById('add-row').addEventListener('click', function() {
             const firstRow = tableBody.rows[0];
             const newRow = firstRow.cloneNode(true);
             
-            newRow.querySelectorAll('input').forEach(input => {
-                input.value = input.type === 'number' ? '0' : '';
-            });
+            // Bersihkan value text dan reset semua dropdown (select)
+            newRow.querySelectorAll('input:not([readonly])').forEach(input => input.value = '');
+            newRow.querySelectorAll('.get-corak, .get-gulung, .get-meter').forEach(input => input.value = '');
             newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+            
             tableBody.appendChild(newRow);
         });
 
+        // Fitur Hapus Baris
         tableBody.addEventListener('click', function(e) {
             if (e.target.closest('.remove-row')) {
                 if (tableBody.rows.length > 1) {
                     e.target.closest('tr').remove();
                 } else {
-                    alert('Minimal harus ada 1 baris rincian!');
+                    alert('Minimal 1 baris rincian!');
                 }
+            }
+        });
+
+        // Fitur AUTO-FILL saat Batch dipilih
+        tableBody.addEventListener('change', function(e) {
+            if (e.target.classList.contains('select-batch')) {
+                const tr = e.target.closest('tr');
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                
+                // Isi inputan readonly (Hanya Corak, Gulung, Meter)
+                tr.querySelector('.get-corak').value = selectedOption.dataset.corak || '';
+                tr.querySelector('.get-gulung').value = selectedOption.dataset.gulung || '';
+                tr.querySelector('.get-meter').value = selectedOption.dataset.meter || '';
             }
         });
     });

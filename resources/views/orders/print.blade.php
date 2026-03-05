@@ -152,6 +152,18 @@
             padding: 8px 10px;
             border: 1px solid #000;
         }
+        /* 👇 CSS UNTUK KOTAK KETIK BEBAS 👇 */
+        .free-text-area {
+            width: 100%;
+            height: 120px; /* Tinggi kotak, bisa disesuaikan */
+            border: none; /* Menghilangkan border dalam agar menyatu dengan kotak luar */
+            resize: none; /* Mencegah kotak ditarik-tarik yang bisa merusak layout cetak */
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            outline: none;
+            padding: 4px;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
@@ -186,8 +198,8 @@
         <tr>
             <td class="label">KODE CORAK</td>
             <td class="value">: <strong>{{ $order->fabric->corak ?? '-' }}</strong> &nbsp;&nbsp;&nbsp;&nbsp;{{ $order->fabric->code_kain ?? '-' }}</td>
-            <td class="label">Tag Label</td>
-            <td class="value">: - </td>
+            <td class="label">CUSTOMER LEVEL</td>
+            <td class="value">: {{ $order->customer_level ?? '-' }} </td>
         </tr>
     </table>
 
@@ -236,31 +248,24 @@
 
     <div class="checkbox-section">
         <div class="box-row">
-            <div class="box">
+            
+            <div class="box" style="height: 150px;"> 
                 <div class="box-title">TARGET PRODUKSI</div>
-                <div class="checkbox-item"><span class="square"></span> 1. PLAN GREY</div>
-                <div class="checkbox-item"><span class="square"></span> 2. NO SP</div>
-                <div class="checkbox-item"><span class="square"></span> 3. LEBAR</div>
-                <div class="checkbox-item"><span class="square"></span> 4. HAND FEEL</div>
-                <div class="checkbox-item"><span class="square"></span> 5. GRAMASI</div>
-                <div class="checkbox-item"><span class="square"></span> 6. WARNA</div>
-                <div class="checkbox-item"><span class="square"></span> 7. DEL. TIME</div>
-                <div class="checkbox-item"><span class="square"></span> 8. KETERANGAN</div>
+                <div class="free-text-area" style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{!! $order->target_produksi ?? '' !!}</div>
             </div>
             
-            <div class="box">
+            <div class="box" style="height: 150px;">
                 <div class="box-title">TARGET PACKING</div>
-                <div class="checkbox-item"><span class="square"></span> 1. POINT INSPECT</div>
-                <div class="checkbox-item"><span class="square"></span> 2. JOIN PIECE</div>
-                <div class="checkbox-item"><span class="square"></span> 3. ROLL ON TUBE</div>
-                <div class="checkbox-item"><span class="square"></span> 4. PIECE LENGTH</div>
-                <div class="checkbox-item"><span class="square"></span> 5. TAG</div>
-                <div class="checkbox-item"><span class="square"></span> 6. PITA</div>
-                <div class="checkbox-item"><span class="square"></span> 7. SAMPLE</div>
-                <div class="checkbox-item"><span class="square"></span> 8. KETERANGAN</div>
+                <div class="free-text-area" style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{!! $order->target_packing ?? '' !!}</div>
             </div>
+
         </div>
     </div>
 
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
 </body>
 </html>

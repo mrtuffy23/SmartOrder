@@ -10,22 +10,22 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-    {
+{
     Schema::create('delivery_details', function (Blueprint $table) {
         $table->id();
-        // Relasi ke tabel Induk Surat Jalan
         $table->foreignId('delivery_id')->constrained('deliveries')->onDelete('cascade');
+        $table->foreignId('pemartaian_detail_id')->constrained('pemartaian_details')->onDelete('restrict');
         
-        // Relasi ke Barang Jadi (Kain yang sudah di-finish)
-        $table->foreignId('quality_finish_id')->constrained('quality_finishes')->onDelete('restrict');
+        // 👇 TAMBAHAN BARU: Buyer & Warna ada di setiap baris 👇
+        $table->foreignId('buyer_id')->constrained('buyers')->onDelete('restrict');
+        $table->foreignId('color_id')->constrained('colors')->onDelete('restrict');
         
-        $table->integer('jml_roll')->default(0);
-        $table->decimal('total_meter', 10, 2)->default(0);
-        $table->decimal('total_berat', 10, 2)->nullable()->default(0);
-        
+        $table->string('no_order')->nullable();
+        $table->string('no_roda')->nullable();
+        $table->string('keterangan')->nullable();
         $table->timestamps();
     });
-    }
+}
 
     /**
      * Reverse the migrations.

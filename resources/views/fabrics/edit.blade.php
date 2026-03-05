@@ -40,6 +40,13 @@
                         <label>Density</label>
                         <input type="text" name="density" class="form-control" value="{{ old('density', $fabrics->density) }}">
                     </div>
+                    <div class="form-group">
+                        <label>Status Kain</label>
+                        <select name="is_active" class="form-control" required>
+                            <option value="1" {{ $fabrics->is_active == 1 ? 'selected' : '' }}>Aktif</option>
+                            <option value="0" {{ $fabrics->is_active == 0 ? 'selected' : '' }}>Non-Aktif</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="card-footer">

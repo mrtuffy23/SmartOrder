@@ -6,90 +6,124 @@ use App\Models\Delivery;
 use App\Models\DeliveryDetail;
 use App\Models\Buyer;
 use App\Models\QualityFinish;
+use App\Models\TutupBuku;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\DeliveryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DeliveryController extends Controller
 {
     // 1. TAMPILKAN DAFTAR PENGIRIMAN
     public function index(Request $request)
     {
-        $query = Delivery::with(['buyer', 'details.qualityFinish.pemartaianDetail.fabric'])->latest('tanggal_kirim');
+        $query = \App\Models\Delivery::with([
+            'buyer',
+            'details.buyer',
+            'details.color', // 🔥 Tambahkan ini agar warna di Excel tidak kosong
+            'details.pemartaianDetail.fabric'
+        ]);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('no_surat_jalan', 'like', "%{$search}%")
-                  ->orWhereHas('buyer', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+        // Filter by bulan
+        if ($request->filled('bulan')) {
+            $query->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$request->bulan]);
         }
 
-        $deliveries = $query->paginate(15)->withQueryString();
-        return view('deliveries.index', compact('deliveries'));
+        // Search by buyer name or no_order
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('buyer', function($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                })->orWhereHas('details', function($q2) use ($search) {
+                    $q2->where('no_order', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // =======================================================
+        // ⚡ TANGKAP TOMBOL EXPORT EXCEL ⚡
+        // =======================================================
+        if ($request->has('export') && $request->export == 'excel') {
+            $fileName = 'Data_Delivery_' . date('d_m_Y') . '.xlsx';
+            
+            // 1. Ambil data Induk (Delivery)
+            $deliveries = $query->get(); 
+            
+            // 2. 🔥 INI KUNCINYA: Pecah data Induk menjadi baris-baris Rincian (Detail)
+            $data_export = collect();
+            foreach ($deliveries as $delivery) {
+                foreach ($delivery->details as $detail) {
+                    // Sisipkan relasi induk agar tanggalnya bisa dibaca di Excel
+                    $detail->setRelation('delivery', $delivery); 
+                    $data_export->push($detail);
+                }
+            }
+            
+            // 3. Lempar data Rincian yang sudah dipecah ke class Export
+            return Excel::download(new DeliveryExport($data_export), $fileName);
+        }
+
+        // Jika bukan export, tampilkan web biasa
+        $deliveries = $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
+
+        // Ambil daftar bulan yang sudah ditutup
+        $closed_months = TutupBuku::where('status', 'closed')->pluck('bulan')->toArray();
+
+        return view('deliveries.index', compact('deliveries', 'closed_months'));
     }
 
     // 2. TAMPILKAN FORM SURAT JALAN BARU
     public function create()
     {
-        // Ambil data Buyer
-        $buyers = Buyer::orderBy('name', 'asc')->get();
-        
-        // Ambil data Barang Jadi yang siap kirim
-        $finished_goods = QualityFinish::with(['pemartaianDetail.fabric'])->orderBy('tanggal_finish', 'desc')->get();
-        
-        // Bikin nomor Surat Jalan otomatis (Format: SJ/Tahun/001)
-        $tahun = date('y');
-        $prefix = "SJ/$tahun/";
-        $lastDelivery = Delivery::where('no_surat_jalan', 'like', $prefix . '%')->latest('id')->first();
-        
-        $nomorBaru = 1;
-        if ($lastDelivery) {
-            $pecah = explode('/', $lastDelivery->no_surat_jalan);
-            $nomorBaru = (int) end($pecah) + 1;
-        }
-        $auto_no_sj = $prefix . sprintf('%04d', $nomorBaru);
+        // Panggil Master Data untuk Dropdown di tabel
+        $buyers = \App\Models\Buyer::orderBy('name', 'asc')->get();
+        $colors = \App\Models\Color::orderBy('name', 'asc')->get();
 
-        return view('deliveries.create', compact('buyers', 'finished_goods', 'auto_no_sj'));
+        // Ambil Batch yang belum terkirim
+        $available_batches = \App\Models\PemartaianDetail::with('fabric')
+            ->doesntHave('deliveryDetails')
+            ->get();
+
+        $orders = \App\Models\Order::orderBy('mf_number', 'asc')->get();
+
+        return view('deliveries.create', compact('available_batches', 'buyers', 'colors', 'orders'));
     }
 
-    // 3. SIMPAN DATA PENGIRIMAN KE DATABASE
     public function store(Request $request)
     {
-        $request->validate([
-            'no_surat_jalan' => 'required|unique:deliveries,no_surat_jalan',
-            'tanggal_kirim' => 'required|date',
-            'buyer_id' => 'required|exists:buyers,id',
-            'quality_finish_id' => 'required|array',
-            'quality_finish_id.*' => 'required',
-        ]);
+        // Cek apakah bulan dari tanggal yang diinput sudah ditutup
+        $bulan = date('Y-m', strtotime($request->tanggal));
+        if (TutupBuku::where('bulan', $bulan)->where('status', 'closed')->exists()) {
+            return back()->withInput()->with('error', 'Gagal! Bulan ' . date('F Y', strtotime($bulan . '-01')) . ' sudah ditutup. Tidak bisa menambah data delivery.');
+        }
 
-        DB::transaction(function () use ($request) {
-            // A. Simpan Header Surat Jalan
-            $delivery = Delivery::create([
-                'no_surat_jalan' => $request->no_surat_jalan,
-                'tanggal_kirim' => $request->tanggal_kirim,
-                'buyer_id' => $request->buyer_id,
-                'no_kendaraan' => $request->no_kendaraan,
-                'nama_supir' => $request->nama_supir,
-                'keterangan' => $request->keterangan,
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            // 1. Simpan Induk (Sekarang cuma Tanggal saja)
+            $delivery = \App\Models\Delivery::create([
+                'tanggal' => $request->tanggal,
             ]);
 
-            // B. Simpan Detail Kain yang Dikirim
-            $finishes = $request->quality_finish_id;
-            foreach ($finishes as $key => $finishId) {
-                if(!$finishId) continue;
-                
-                DeliveryDetail::create([
-                    'delivery_id' => $delivery->id,
-                    'quality_finish_id' => $finishId,
-                    'jml_roll' => $request->jml_roll[$key] ?? 0,
-                    'total_meter' => $request->total_meter[$key] ?? 0,
-                    'total_berat' => $request->total_berat[$key] ?? 0,
-                ]);
+            // 2. Simpan Rincian
+            $batches = $request->pemartaian_detail_id;
+            if ($batches) {
+                foreach ($batches as $key => $batch_id) {
+                    \App\Models\DeliveryDetail::create([
+                        'delivery_id'          => $delivery->id,
+                        'pemartaian_detail_id' => $batch_id,
+                        
+                        // 👇 Simpan data inputan per baris 👇
+                        'buyer_id'             => $request->buyer_id[$key],
+                        'no_order'             => $request->mf_number[$key],
+                        'color_id'             => $request->color_id[$key],
+                        'no_roda'              => $request->no_roda[$key],
+                        'keterangan'           => $request->keterangan[$key],
+                    ]);
+                }
             }
         });
 
-        return redirect()->route('deliveries.index')->with('success', 'Surat Jalan berhasil dibuat dan disimpan!');
+        return redirect()->route('deliveries.index')->with('success', 'Data Pengiriman berhasil disimpan!');
     }
     // 4. TAMPILKAN FORM EDIT
     public function edit($id)
@@ -150,6 +184,13 @@ class DeliveryController extends Controller
     public function destroy($id)
     {
         $delivery = Delivery::findOrFail($id);
+
+        // Cek apakah bulan delivery sudah ditutup
+        $bulan = date('Y-m', strtotime($delivery->tanggal));
+        if (TutupBuku::where('bulan', $bulan)->where('status', 'closed')->exists()) {
+            return back()->with('error', 'Gagal! Bulan ' . date('F Y', strtotime($bulan . '-01')) . ' sudah ditutup. Tidak bisa menghapus data delivery.');
+        }
+
         $delivery->delete();
 
         return redirect()->route('deliveries.index')->with('success', 'Surat Jalan berhasil dihapus!');

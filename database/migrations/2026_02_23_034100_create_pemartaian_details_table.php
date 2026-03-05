@@ -10,24 +10,25 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-    {
+{
     Schema::create('pemartaian_details', function (Blueprint $table) {
         $table->id();
-        // Relasi ke tabel induk (Pemartaian)
         $table->foreignId('pemartaian_id')->constrained('pemartaians')->onDelete('cascade');
         
-        // Data Rincian (Sesuai kolom di foto aplikasi lama)
-        $table->string('no_order')->nullable(); // Contoh: OK/22/10070
-        $table->foreignId('fabric_id')->constrained('fabrics')->onDelete('restrict'); // Kode & Corak
+        $table->string('no_order')->nullable();
+        $table->foreignId('fabric_id')->constrained('fabrics')->onDelete('restrict');
         $table->string('warna')->nullable();
-        $table->string('no_batch')->nullable(); // Pakai string karena kadang ada huruf misal "4A"
-        $table->integer('jml_gulung')->default(0);
-        $table->decimal('total_meter', 10, 2)->default(0);
-        $table->decimal('berat', 10, 2)->nullable()->default(0);
+        $table->string('no_batch')->unique(); // Auto-number dari sistem
+        $table->integer('jml_gulung');
+        $table->decimal('total_meter', 10, 2);
+        $table->decimal('berat', 10, 2)->nullable();
+        
+        // 👇 TAMBAHAN BARU DARI MANAJER 👇
+        $table->string('keterangan')->nullable(); 
         
         $table->timestamps();
     });
-    }
+}
 
     /**
      * Reverse the migrations.

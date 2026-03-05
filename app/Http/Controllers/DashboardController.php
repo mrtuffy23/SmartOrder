@@ -33,15 +33,17 @@ class DashboardController extends Controller
         $total_keluar_grey = PemartaianDetail::sum('total_meter');
         $saldo_grey = $total_masuk_grey - $total_keluar_grey;
 
-        $total_wip = PemartaianDetail::doesntHave('qualityFinish')->count();
-        
-        $total_meter_finish = QualityFinish::sum('hasil_meter'); 
-        $total_meter_dikirim = DeliveryDetail::sum('total_meter'); 
-        $saldo_barang_jadi = $total_meter_finish - $total_meter_dikirim; 
+        $total_masuk_wip = PemartaianDetail::sum('total_meter');
+        $total_keluar_wip = DeliveryDetail::join('pemartaian_details', 'delivery_details.pemartaian_detail_id', '=', 'pemartaian_details.id')
+            ->sum('pemartaian_details.total_meter');
+        $total_wip = $total_masuk_wip - $total_keluar_wip;
 
-        $delivery_bulan_ini = Delivery::whereMonth('tanggal_kirim', date('m'))
-                                      ->whereYear('tanggal_kirim', date('Y'))
-                                      ->count();
+        $total_pengiriman = DeliveryDetail::join('pemartaian_details', 'delivery_details.pemartaian_detail_id', '=', 'pemartaian_details.id')
+            ->join('deliveries', 'delivery_details.delivery_id', '=', 'deliveries.id')
+            ->whereRaw("DATE_FORMAT(deliveries.tanggal, '%Y-%m') = ?", [Carbon::now()->format('Y-m')])
+            ->sum('pemartaian_details.total_meter');
+
+        
 
         // ==========================================
         // 3. DATA GRAFIK ANALITIK 6 BULAN (Bawah)
@@ -52,17 +54,16 @@ class DashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $bulan = Carbon::now()->subMonths($i);
             $bulan_labels[] = $bulan->translatedFormat('M Y');
-            
-            $total_meter_bulan = QualityFinish::whereYear('tanggal_finish', $bulan->year)
-                                              ->whereMonth('tanggal_finish', $bulan->month)
-                                              ->sum('hasil_meter');
-            $data_produksi[] = $total_meter_bulan;
+
+            $data_produksi[] = PemartaianDetail::join('pemartaians', 'pemartaian_details.pemartaian_id', '=', 'pemartaians.id')
+                ->whereRaw("DATE_FORMAT(pemartaians.tanggal, '%Y-%m') = ?", [$bulan->format('Y-m')])
+                ->sum('pemartaian_details.total_meter');
         }
 
         
         return view('dashboard.index', compact(
             'total_buyer', 'total_kain', 'total_color', 'total_order',
-            'saldo_grey', 'total_wip', 'saldo_barang_jadi', 'delivery_bulan_ini',
+            'saldo_grey', 'total_wip', 'total_pengiriman',
             'bulan_labels', 'data_produksi'
         ));
     }
