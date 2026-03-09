@@ -44,15 +44,15 @@
                 <table class="table table-bordered table-hover text-center align-middle text-sm" style="border: 1px solid #dee2e6;">
                     <thead class="bg-light">
                         <tr>
-                            <th class="align-middle py-3">Corak</th>
-                            <th class="align-middle py-3">Kode Kain</th>
-                            <th class="align-middle py-3">Quality</th>
-                            <th class="align-middle py-3">Kode Buyer</th>
-                            <th class="align-middle py-3">Brand</th>
-                            <th class="align-middle py-3">Konstruksi</th>
-                            <th class="align-middle py-3">Density</th>
-                            <th class="align-middle py-3">Status</th>
-                            <th class="align-middle py-3" width="8%">Aksi</th>
+                            <th class="align-middle py-2">Corak</th>
+                            <th class="align-middle py-2">Kode Kain</th>
+                            <th class="align-middle py-2">Quality</th>
+                            <th class="align-middle py-2">Kode Buyer</th>
+                            <th class="align-middle py-2">Brand</th>
+                            <th class="align-middle py-2">Konstruksi</th>
+                            <th class="align-middle py-2">Density</th>
+                            <th class="align-middle py-2">Status</th>
+                            <th class="align-middle py-2" width="15%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody> 
@@ -73,14 +73,20 @@
                                 @endif
                             </td>
                             <td class="align-middle">
-                                <a href="{{ route('fabrics.edit', $kain->id) }}" class="text-warning font-weight-bold" style="text-decoration: none; font-size: 14px;">
+                                <a href="{{ route('fabrics.edit', $kain->id) }}" 
+                                class="text-primary font-weight-bold me-2" 
+                                style="text-decoration: none; font-size: 14px;">
                                     Edit
                                 </a>
-                                <br>
+
                                 <form action="{{ route('fabrics.destroy', $kain->id) }}" method="POST" class="d-inline">
                                     @csrf 
                                     @method('DELETE')
-                                    <button type="submit" class="text-danger font-weight-bold" style="background: transparent; border: none; padding: 0; font-size: 14px;" onclick="return confirm('Yakin ingin menghapus data kain ini?')" title="Hapus">
+                                    <button type="submit" 
+                                        class="text-danger font-weight-bold" 
+                                        style="background: transparent; border: none; padding: 0; font-size: 14px;" 
+                                        onclick="return confirm('Yakin ingin menghapus data kain ini?')" 
+                                        title="Hapus">
                                         Hapus
                                     </button>
                                 </form>

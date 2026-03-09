@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+ChemicalSeeder.php
+DyestuffSeeder.php
+MachineSeeder.php
+ProcessSeeder.php
+UserSeeder.php

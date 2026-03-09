@@ -143,6 +143,7 @@
                             <option value="admin">Admin (Order & Transaksi)</option>
                             <option value="gudang">Gudang (Penerimaan & Stok)</option>
                             <option value="produksi">Produksi (Pemartaian & WIP)</option>
+                            <option value="laborat">Laborat (Pengujian & QC)</option>
                         </select>
                     </div>
                 </div>
