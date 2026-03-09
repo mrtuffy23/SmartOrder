@@ -15,9 +15,22 @@ use Illuminate\Http\Request;
 class JobTicketController extends Controller
 {
     // 1. TAMPILKAN DAFTAR RIWAYAT JOB TICKET
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = JobTicket::with(['order', 'color', 'machine', 'process'])->orderBy('id', 'desc')->paginate(20);
+        $search = $request->search;
+
+        $tickets = \App\Models\JobTicket::with(['order', 'color', 'machine', 'process'])
+            ->when($search, function ($query, $search) {
+                return $query->where('ticket_code', 'LIKE', "%{$search}%")
+                    ->orWhereHas('order', function ($q) use ($search) {
+                        $q->where('mf_number', 'LIKE', "%{$search}%");
+                    })->orWhereHas('color', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
+            })
+            ->latest()
+            ->get(); // Gunakan ->paginate(10) jika data ingin dibuat per-halaman
+
         return view('job_tickets.index', compact('tickets'));
     }
 
@@ -62,12 +75,33 @@ class JobTicketController extends Controller
             'process_id' => 'required',
         ]);
 
-        // Buat Kode Tiket Otomatis (Contoh: 260326) -> (TglBlnThn + Angka Random)
-        $ticket_code = date('dmy') . rand(10, 99);
+        // 👇 LOGIKA TICKET CODE BARU (Format: YY + 5 Digit Urut) 👇
+        $tahun = date('y'); // Mengambil 2 digit tahun saat ini (contoh: '26' untuk 2026)
+        
+        // Cari tiket terakhir yang dibuat di tahun yang sama
+        $lastTicket = \App\Models\JobTicket::where('ticket_code', 'LIKE', $tahun . '%')
+                            ->orderBy('ticket_code', 'desc')
+                            ->first();
+
+        if ($lastTicket) {
+            // Jika sudah ada, ambil 5 angka di belakangnya lalu tambah 1
+            $lastNumber = (int) substr($lastTicket->ticket_code, 2);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            // Jika ini adalah tiket pertama di tahun tersebut, mulai dari angka 1
+            $nextNumber = 1;
+        }
+
+        // Gabungkan tahun dengan angka urut yang dipaksa menjadi 5 digit (contoh: 2600001)
+        $ticketCode = $tahun . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        // 👆 --------------------------------------------------- 👆
+
+        // Pastikan variabel untuk disave ke database menggunakan $ticketCode
+        // Contoh: 'ticket_code' => $ticketCode,
 
         // 1. Simpan Data Induk
         $job = JobTicket::create([
-            'ticket_code' => $ticket_code,
+            'ticket_code' => $ticketCode,
             'tanggal' => $request->tanggal,
             'order_id' => $request->order_id,
             'color_id' => $request->color_id, // 👈 2. INI BARIS YANG TADI HILANG!

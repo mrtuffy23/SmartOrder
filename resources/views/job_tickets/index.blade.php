@@ -3,13 +3,38 @@
 @section('content')
 <div class="content-header">
     <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6"><h1 class="m-0">Data Riwayat Job Ticket</h1></div>
-            <div class="col-sm-6 text-right">
-                <a href="{{ route('job-tickets.create') }}" class="btn btn-primary font-weight-bold">
-                    <i class="fas fa-plus"></i> Buat Ticket Baru
-                </a>
+        <div class="row mb-2 align-items-center">
+            
+            <div class="col-sm-6">
+                <h1 class="m-0">Data Job Tickets</h1>
             </div>
+            
+            <div class="col-sm-6">
+                <div class="d-flex justify-content-end align-items-center">
+                    
+                    <form action="{{ route('job-tickets.index') }}" method="GET" class="m-0 mr-2">
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" class="form-control" placeholder="Cari No Order / Warna..." value="{{ request('search') }}">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                @if(request('search'))
+                                    <a href="{{ route('job-tickets.index') }}" class="btn btn-danger" title="Reset Pencarian">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </form>
+
+                    <a href="{{ route('job-tickets.create') }}" class="btn btn-primary btn-sm font-weight-bold">
+                        <i class="fas fa-plus"></i> Tambah Job Tiket Baru
+                    </a>
+                    
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -28,7 +53,7 @@
                             <th>Warna</th>
                             <th>Mesin</th>
                             <th>Proses</th>
-                            <th width="15%">Aksi</th>
+                            <th width="20%">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>

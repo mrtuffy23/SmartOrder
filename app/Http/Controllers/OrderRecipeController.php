@@ -13,9 +13,23 @@ use Illuminate\Http\Request;
 class OrderRecipeController extends Controller
 {
     // Tampilkan Daftar Resep Original
-    public function index()
+    public function index(Request $request)
     {
-        $recipes = OrderRecipe::with(['order', 'color'])->orderBy('id', 'desc')->paginate(20);
+        $search = $request->search;
+
+        // Tarik data resep beserta relasi order dan warna
+        $recipes = \App\Models\OrderRecipe::with(['order', 'color'])
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('order', function ($q) use ($search) {
+                    $q->where('mf_number', 'LIKE', "%{$search}%");
+                })->orWhereHas('color', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return view('order_recipes.index', compact('recipes'));
     }
 

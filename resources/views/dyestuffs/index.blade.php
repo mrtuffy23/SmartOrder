@@ -5,7 +5,7 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">Master Data Zat Warna (Dyestuffs)</h1>
+                <h1 class="m-0">Data Dyestuffs</h1>
             </div>
             <div class="col-sm-6 text-right">
                 <button class="btn btn-primary font-weight-bold" data-toggle="modal" data-target="#modalTambah">

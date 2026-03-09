@@ -5,7 +5,7 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">Master Data Bahan Kimia (Chemicals)</h1>
+                <h1 class="m-0">Data Chemicals</h1>
             </div>
             <div class="col-sm-6 text-right">
                 <button class="btn btn-primary font-weight-bold" data-toggle="modal" data-target="#modalTambah">

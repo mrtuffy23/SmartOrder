@@ -4,7 +4,7 @@
 <div class="content-header">
     <div class="container-fluid">
         <div class="row mb-2">
-            <div class="col-sm-6"><h1 class="m-0">Master Data Proses & SOP Resep</h1></div>
+            <div class="col-sm-6"><h1 class="m-0">Data Proses & SOP Resep</h1></div>
             <div class="col-sm-6 text-right">
                 <button class="btn btn-primary font-weight-bold" data-toggle="modal" data-target="#modalTambah">
                     <i class="fas fa-plus"></i> Tambah Proses
@@ -24,49 +24,68 @@
 
         <div class="card card-dark card-outline">
             <div class="card-body p-0 table-responsive">
-                <table class="table table-bordered table-striped text-center">
-                    <thead class="bg-light">
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="25%">Nama Proses</th>
-                            <th width="40%">Paket SOP (Obat & Konsentrasi)</th>
-                            <th width="15%">Status</th>
-                            <th width="15%">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($processes as $item)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td class="font-weight-bold text-left text-primary">{{ $item->name }}</td>
-                            <td class="text-left">
-                                @forelse($item->chemicals as $chem)
-                                    <span class="badge badge-secondary" style="font-size: 13px; margin:2px;">
-                                        {{ $chem->active_code }} <span class="text-warning">({{ $chem->pivot->concentration }})</span>
-                                    </span>
-                                @empty
-                                    <span class="text-muted text-sm"><i>Belum ada resep obat</i></span>
-                                @endforelse
-                            </td>
-                            <td>
-                                @if($item->is_active) <span class="badge badge-success">Aktif</span>
-                                @else <span class="badge badge-danger">Non-Aktif</span> @endif
-                            </td>
-                            <td>
-                                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modalEdit{{ $item->id }}">
-                                    <i class="fas fa-edit"></i> Edit Resep
+                <table class="table table-bordered table-hover text-center">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="5%" class="align-middle">No</th>
+                        <th width="25%" class="align-middle">Nama Proses</th>
+                        <th width="40%" class="align-middle">Paket SOP (Obat & Konsentrasi)</th>
+                        <th width="10%" class="align-middle">Status</th>
+                        <th width="20%" class="align-middle">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($processes as $index => $process)
+                    <tr>
+                        <td class="align-middle">{{ $index + 1 }}</td>
+                        <td class="align-middle font-weight-bold text-primary text-left pl-3">{{ $process->name }}</td>
+                        
+                        <td class="p-0 align-middle">
+                            @if($process->chemicals->count() > 0)
+                                <table class="table table-sm table-borderless mb-0 w-100">
+                                    @foreach($process->chemicals as $chem)
+                                    <tr style="border-bottom: 1px solid #f4f6f9;">
+                                        <td class="text-left pl-3" style="color: black;">
+                                            {{ $chem->active_code ?? '-' }}
+                                        </td>
+                                        <td class="text-right pr-3 font-weight-bold" style="color: black;" width="25%">
+                                            {{ str_replace('.', ',', floatval($chem->pivot->concentration)) }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </table>
+                            @else
+                                <span class="text-muted font-italic">Belum ada resep obat</span>
+                            @endif
+                        </td>
+
+                        <td class="align-middle">
+                            @if($process->is_active)
+                                <span class="badge badge-success">Aktif</span>
+                            @else
+                                <span class="badge badge-danger">Nonaktif</span>
+                            @endif
+                        </td>
+                        <td class="align-middle">
+                            <a href="{{ route('processes.edit', $process->id) }}" class="btn btn-warning btn-sm font-weight-bold">
+                                <i class="fas fa-edit"></i> Edit Resep
+                            </a>
+                            <form action="{{ route('processes.destroy', $process->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus proses ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus Proses">
+                                    <i class="fas fa-trash"></i>
                                 </button>
-                                <form action="{{ route('processes.destroy', $item->id) }}" method="POST" class="d-inline">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus data ini?')"><i class="fas fa-trash"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="5" class="text-center text-muted">Belum ada data proses.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center font-italic text-muted py-4">Belum ada data proses yang tersimpan.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
             </div>
         </div>
     </div>

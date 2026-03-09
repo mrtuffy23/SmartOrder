@@ -22,21 +22,28 @@
                 <li class="nav-item">
                     <a href="{{ route('dyestuffs.index') }}" class="nav-link {{ request()->routeIs('dyestuffs.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tint"></i>
-                        <p>Master Zat Warna</p>
+                        <p>Dyestuffs</p>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{{ route('chemicals.index') }}" class="nav-link {{ request()->routeIs('chemicals.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-vial"></i>
-                        <p>Master Bahan Kimia</p>
+                        <p>Chemicals</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('machines.index') }}" class="nav-link {{ request()->routeIs('machines.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cogs"></i>
+                        <p>Machines</p>
                     </a>
                 </li>
                 
                 <li class="nav-item">
                     <a href="{{ route('processes.index') }}" class="nav-link {{ request()->routeIs('processes.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-flask"></i>
-                        <p>Master Proses & SOP</p>
+                        <p>Processes & SOP</p>
                     </a>
                 </li>
 
@@ -45,14 +52,14 @@
                 <li class="nav-item">
                     <a href="{{ route('order-recipes.index') }}" class="nav-link {{ request()->routeIs('order-recipes.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-book-open"></i>
-                        <p>Buku Resep Original</p>
+                        <p>Data Resep</p>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{{ route('job-tickets.index') }}" class="nav-link {{ request()->routeIs('job-tickets.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-ticket-alt"></i>
-                        <p>Job Ticket Produksi</p>
+                        <p>Print Job Ticket</p>
                     </a>
                 </li>
 
@@ -60,7 +67,7 @@
                 <li class="nav-item">
                     <a href="{{ url('/dashboard') }}" class="nav-link bg-danger text-white">
                         <i class="nav-icon fas fa-arrow-left"></i>
-                        <p>Kembali ke Smart Order</p>
+                        <p>Back to Smart Order</p>
                     </a>
                 </li>
                 @endif

@@ -11,14 +11,14 @@
             font-size: 14px;
             color: #000;
             margin: 0;
-            padding: 20px;
+            padding: 10px; /* Sedikit dikurangi agar muat di 14cm */
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
         
         .header-title {
-            font-size: 32px;
+            font-size: 28px; /* Dikecilkan sedikit agar proporsional */
             font-weight: bold;
             text-align: center;
             margin-bottom: 5px;
@@ -27,20 +27,20 @@
         .date-text {
             text-align: right;
             font-size: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .info-table {
             width: 100%;
             margin-bottom: 10px;
         }
         .info-table td {
-            padding: 5px 2px;
+            padding: 3px 2px; /* Dibuat sedikit lebih rapat */
             vertical-align: top;
         }
         .process-bar {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 2px solid #000;
             margin-bottom: 10px;
         }
@@ -51,17 +51,24 @@
         .item-table th {
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
-            padding: 10px 5px;
+            padding: 8px 5px;
             text-align: left;
         }
         .item-table td {
-            padding: 8px 5px;
+            padding: 6px 5px;
             vertical-align: top;
         }
-        .section-spacer { height: 20px; }
+        .section-spacer { height: 15px; }
 
+        /* 👇 PENGATURAN KERTAS CUSTOM (24cm x 14cm) 👇 */
         @media print {
-            @page { margin: 15mm; }
+            @page { 
+                size: 24cm 14cm; /* Mengatur panjang dan lebar kertas fisik */
+                margin: 5mm 10mm; /* Margin tipis agar isi muat dan tidak nabrak lubang kertas */
+            }
+            body {
+                padding: 0; /* Hapus padding body saat ngeprint */
+            }
         }
     </style>
 </head>
@@ -79,7 +86,7 @@
             <td width="20%">Ticket Code</td>
             <td width="30%">: {{ $job->ticket_code }}</td>
             <td width="15%">Machine type</td>
-            <td width="35%">: {{ $job->machine->name ?? '-' }}</td>
+            <td width="35%">: {{ explode(' ', $job->machine->name)[0] ?? '-' }}</td>
         </tr>
         <tr>
             <td>Machine Code</td>
@@ -89,7 +96,7 @@
         </tr>
         <tr>
             <td>Fabric Weight</td>
-            <td>: {{ number_format($job->fabric_weight, 0, ',', '.') }} Kg</td>
+            <td>: {{ number_format($job->fabric_weight * ($job->machine->machine_code ?? 1), 0, ',', '.') }} Kg</td>
             <td>Color</td>
             <td>: {{ $job->color->name ?? '-' }}</td>
         </tr>
@@ -102,7 +109,7 @@
     </table>
 
     <div class="process-bar">
-        {{ $job->process->name ?? '' }} - {{ $job->order->mf_number ?? '' }} - {{ $job->color->name ?? '' }} - {{ $job->order->fabric->corak ?? '' }}
+        {{ $job->process->name ?? '' }} - {{ \Illuminate\Support\Str::afterLast($job->order->mf_number, '/') }} - {{ $job->color->name ?? '' }} - {{ $job->order->fabric->corak ?? '' }}
     </div>
 
     <table class="item-table">
@@ -118,18 +125,22 @@
             @foreach($job->dyestuffs as $dye)
             <tr>
                 <td class="font-bold">{{ $dye->dyestuff->active_code ?? '-' }}</td>
-                <td class="text-center">{{ number_format($dye->concentration, 5, ',', '.') }}%</td>
+                <td class="text-center">{{ str_replace('.', ',', floatval($dye->concentration)) }}%</td>
                 <td class="text-center font-bold">{{ number_format($dye->gram, 1, ',', '.') }}</td>
                 <td class="text-right">{{ $dye->dyestuff->name ?? '-' }}</td>
             </tr>
             @endforeach
 
-            <tr><td colspan="4"><div class="section-spacer"></div></td></tr>
-
+            <tr>
+                <td colspan="4" style="border-bottom: 1px dashed #000; padding-top: 10px;"></td>
+            </tr>
+            <tr>
+                <td colspan="4" style="padding-bottom: 10px;"></td>
+            </tr>
             @foreach($job->chemicals as $chem)
             <tr>
                 <td>{{ $chem->chemical->active_code ?? '-' }}</td>
-                <td class="text-center">{{ number_format($chem->concentration, 1, ',', '.') }}</td>
+                <td class="text-center">{{ str_replace('.', ',', floatval($chem->concentration)) }}</td>
                 <td class="text-center font-bold">{{ number_format($chem->gram, 0, ',', '.') }}</td>
                 <td class="text-right">{{ $chem->chemical->name ?? '-' }}</td>
             </tr>

@@ -48,7 +48,7 @@
                                         <select name="machine_id" id="machine_id" class="form-control form-control-sm" required>
                                             <option value="">-- Pilih Mesin --</option>
                                             @foreach($machines as $mc)
-                                                <option value="{{ $mc->id }}" data-volume="{{ $mc->volume }}">{{ $mc->name }}</option>
+                                                <option value="{{ $mc->id }}" data-volume="{{ $mc->volume }}" data-code="{{ $mc->machine_code ?? 1 }}">{{ $mc->name }}</option>
                                             @endforeach
                                         </select>
                                     </td>
@@ -71,8 +71,8 @@
                             <div class="info-box bg-light shadow-sm mb-2">
                                 <span class="info-box-icon bg-info"><i class="fas fa-weight-hanging"></i></span>
                                 <div class="info-box-content">
-                                    <span class="info-box-text">Fabric Weight (Kg)</span>
-                                    <input type="number" name="fabric_weight" id="fabric_weight" class="form-control form-control-sm font-weight-bold input-trigger" readonly tabindex="-1">
+                                    <span class="info-box-text">Fabric Weight (Kg) / Gawang</span>
+                                    <input type="number" step="0.01" name="fabric_weight" id="fabric_weight" class="form-control input-trigger" placeholder="Ketik Berat Kain..." required>
                                 </div>
                             </div>
                             <div class="info-box bg-light shadow-sm">
@@ -162,8 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
     orderSelect.addEventListener('change', function() {
         let orderId = this.value;
         colorSelect.innerHTML = '<option value="">-- Sedang mencari warna... --</option>';
-        weightInput.value = '';
-        bersihkanTabelResep();
+        bersihkanTabelResep(); // Berat kain tidak akan reset lagi saat ganti order
 
         if(orderId) {
             fetch(`{{ url('job-tickets/get-order') }}/${orderId}`)
@@ -192,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     colorSelect.addEventListener('change', function() {
         let selectedOption = this.options[this.selectedIndex];
-        weightInput.value = selectedOption.getAttribute('data-weight') || ''; // Isi Berat Kain
         
         let orderId = orderSelect.value;
         let colorId = this.value;
@@ -217,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // C. Trigger Proses (Siapa tau proses sudah dipilih duluan)
                         document.getElementById('process_id').dispatchEvent(new Event('change'));
                         
-                        // Hitung Gram otomatis
+                        // Hitung Gram otomatis berdasarkan berat kain yang diketik
                         calculateSemua(); 
                     } else {
                         alert('⚠️ Resep untuk warna ini belum ada di "Buku Resep Original"! Silakan ketik manual atau buat resepnya dulu.');
@@ -253,12 +251,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ==========================================
-    // 4. KALKULATOR AJAIB (RUMUS GRAM) 🧮
+    // 4. KALKULATOR AJAIB (RUMUS GRAM UPDATE) 🧮
     // ==========================================
     function calculateSemua() {
-        let weight = parseFloat(document.getElementById('fabric_weight').value) || 0;
+        // 1. Ambil berat inputan awal (per gawang)
+        let inputWeight = parseFloat(document.getElementById('fabric_weight').value) || 0;
         let volume = parseFloat(document.getElementById('volume').value) || 0;
         
+        // 2. Ambil Kode Mesin (Jumlah Gawang)
+        let machineSelect = document.getElementById('machine_id');
+        let machineCode = 1; // Nilai default 1
+        if(machineSelect.selectedIndex > 0) {
+            let selectedOption = machineSelect.options[machineSelect.selectedIndex];
+            machineCode = parseFloat(selectedOption.getAttribute('data-code')) || 1;
+        }
+
+        // 3. KALIKAN BERAT KAIN DENGAN KODE MESIN ⚡
+        let totalWeight = inputWeight * machineCode;
+
         let processSelect = document.getElementById('process_id');
         let processName = processSelect.options[processSelect.selectedIndex]?.text.toUpperCase() || "";
         let isCPB = processName.includes("CPB");
@@ -269,7 +279,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let gramInput = row.querySelector('.dye-gram');
             if(concInput && gramInput) {
                 let conc = parseFloat(concInput.value) || 0;
-                let gram = isCPB ? (conc * volume) : ((conc / 100) * weight * 1000);
+                // 👇 Gunakan totalWeight (Berat Total) di sini 👇
+                let gram = isCPB ? (conc * volume) : ((conc / 100) * totalWeight * 1000);
                 gramInput.value = gram.toFixed(2);
             }
         });
@@ -287,7 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Pemicu Hitung Real-time saat angkanya diketik manual
     document.body.addEventListener('input', function(e) {
-        if(e.target.classList.contains('input-trigger') || e.target.classList.contains('dye-conc') || e.target.classList.contains('chem-conc')) {
+        if(e.target.classList.contains('input-trigger') || 
+           e.target.classList.contains('dye-conc') || 
+           e.target.classList.contains('chem-conc') || 
+           e.target.id === 'fabric_weight' || 
+           e.target.id === 'volume') {
             calculateSemua();
         }
     });

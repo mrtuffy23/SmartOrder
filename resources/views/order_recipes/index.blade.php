@@ -3,13 +3,38 @@
 @section('content')
 <div class="content-header">
     <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6"><h1 class="m-0">Buku Resep Original (Lab Dip)</h1></div>
-            <div class="col-sm-6 text-right">
-                <a href="{{ route('order-recipes.create') }}" class="btn btn-primary font-weight-bold">
-                    <i class="fas fa-plus"></i> Tambah Resep Baru
-                </a>
+        <div class="row mb-2 align-items-center">
+            
+            <div class="col-sm-6">
+                <h1 class="m-0">Data Resep Original</h1>
             </div>
+            
+            <div class="col-sm-6">
+                <div class="d-flex justify-content-end align-items-center">
+                    
+                    <form action="{{ route('order-recipes.index') }}" method="GET" class="m-0 mr-2">
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" class="form-control" placeholder="Cari No Order / Warna..." value="{{ request('search') }}">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                @if(request('search'))
+                                    <a href="{{ route('order-recipes.index') }}" class="btn btn-danger" title="Reset Pencarian">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </form>
+
+                    <a href="{{ route('order-recipes.create') }}" class="btn btn-primary btn-sm font-weight-bold">
+                        <i class="fas fa-plus"></i> Tambah Resep Baru
+                    </a>
+                    
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -24,55 +49,68 @@
 
         <div class="card card-dark card-outline">
             <div class="card-body p-0 table-responsive">
-                <table class="table table-bordered table-striped text-center">
+                <table class="table table-bordered table-hover text-center">
                     <thead class="bg-light">
                         <tr>
-                            <th width="5%">No</th>
-                            <th width="15%">No Order</th>
-                            <th width="15%">Warna</th>
-                            <th width="30%">Resep Zat Warna (Dyes)</th>
-                            <th width="25%">Resep Obat (Chemicals)</th>
-                            <th width="10%">Aksi</th>
+                            <th width="5%" class="align-middle">No</th>
+                            <th width="15%" class="align-middle">No Order</th>
+                            <th width="10%" class="align-middle">Warna</th>
+                            <th width="30%" class="align-middle">Dyestuffs</th>
+                            <th width="30%" class="align-middle">Chemicals</th>
+                            <th width="10%" class="align-middle">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($recipes as $item)
+                        @forelse($recipes as $index => $recipe)
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td class="font-weight-bold text-primary">{{ $item->order->mf_number ?? '-' }}</td>
-                            <td class="font-weight-bold">{{ $item->color->name ?? '-' }}</td>
+                            <td class="align-middle">{{ $index + 1 }}</td>
+                            <td class="align-middle font-weight-bold text-primary">{{ $recipe->order->mf_number ?? '-' }}</td>
+                            <td class="align-middle font-weight-bold">{{ $recipe->color->name ?? '-' }}</td>
                             
-                            <td class="text-left">
-                                @forelse($item->dyestuffs as $dye)
-                                    <span class="badge badge-info" style="font-size: 13px; margin:2px;">
-                                        {{ $dye->dyestuff->active_code ?? '-' }} 
-                                        <span class="text-warning">({{ rtrim(rtrim($dye->concentration, '0'), '.') }}%)</span>
-                                    </span>
-                                @empty
-                                    <span class="text-muted text-sm"><i>-</i></span>
-                                @endforelse
+                            <td class="p-0 align-middle">
+                                <table class="table table-sm table-borderless mb-0 w-100">
+                                    @foreach($recipe->dyestuffs as $dye)
+                                    <tr style="border-bottom: 1px solid #f4f6f9;">
+                                        <td class="text-left pl-3" style="color: black;">
+                                            {{ $dye->dyestuff->active_code ?? '-' }}
+                                        </td>
+                                        <td class="text-right pr-3 font-weight-bold" style="color: black;" width="35%">
+                                            {{ str_replace('.', ',', floatval($dye->concentration)) }}%
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </table>
                             </td>
-                            
-                            <td class="text-left">
-                                @forelse($item->chemicals as $chem)
-                                    <span class="badge badge-warning" style="font-size: 13px; margin:2px;">
-                                        {{ $chem->chemical->active_code ?? '-' }} 
-                                        <span class="text-dark">({{ rtrim(rtrim($chem->concentration, '0'), '.') }} g/L)</span>
-                                    </span>
-                                @empty
-                                    <span class="text-muted text-sm"><i>-</i></span>
-                                @endforelse
+
+                            <td class="p-0 align-middle">
+                                <table class="table table-sm table-borderless mb-0 w-100">
+                                    @foreach($recipe->chemicals as $chem)
+                                    <tr style="border-bottom: 1px solid #f4f6f9;">
+                                        <td class="text-left pl-3" style="color: black;">
+                                            {{ $chem->chemical->active_code ?? '-' }}
+                                        </td>
+                                        <td class="text-right pr-3 font-weight-bold" style="color: black;" width="40%">
+                                            {{ str_replace('.', ',', floatval($chem->concentration)) }} g/L
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </table>
                             </td>
-                            
-                            <td>
-                                <form action="{{ route('order-recipes.destroy', $item->id) }}" method="POST" class="d-inline">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus resep ini?')"><i class="fas fa-trash"></i></button>
+
+                            <td class="align-middle">
+                                <form action="{{ route('order-recipes.destroy', $recipe->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus resep ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus Resep">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" class="text-center text-muted">Belum ada Buku Resep Original.</td></tr>
+                        <tr>
+                            <td colspan="6" class="text-center font-italic text-muted py-4">Belum ada data resep yang tersimpan.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
